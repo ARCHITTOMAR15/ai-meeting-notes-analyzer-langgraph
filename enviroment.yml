@@ -1,0 +1,35 @@
+
+name:meeting_notes_langraph
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.12
+  - pip
+  - notebook
+  - ipykernel
+
+ -pip:
+  - langchain
+  - langgraph
+  - llama-index
+  - faiss-cpu
+  - sentence-transformers
+  - transformers
+  - accelerate
+  - huggingface-hub
+  - pypdf
+  - python-docx
+  - docx2txt
+  - pyyaml
+  - loguru
+  - python-dotenv
+  - streamlit
+  - pandas
+  - numpy
+  - tqdm
+  - pytest
+  - rouge-score
+  - bert-score

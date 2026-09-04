@@ -1,0 +1,31 @@
+
+#python
+__pycache__/
+*.pyc
+
+#Enviroment
+.env
+.venv
+.ipynb_checkpoints/
+
+#logs
+logs/*.log
+
+#faiss
+
+data/faiss_index/*
+
+# processed data
+data/interim/*
+data/processed/*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/
+
+# OS
+.DS_Store
+Thumbs.db
+

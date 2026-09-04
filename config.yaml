@@ -1,0 +1,29 @@
+
+project:
+  name: AI Meeting Notes Analyzer
+  version: 1.0
+
+paths:
+  raw_data: data/raw
+  interim_data: data/interim
+  processed_data: data/processed
+  faiss_index: data/faiss/index
+  logs: logs
+
+llm:
+  provider: huggingface
+  model_name: mistralai/Mistral-7B-Instruct-v0.3
+  temprature: 0.2
+  max_tokens: 1024
+
+embedding:
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+
+rag:
+  chunk_size: 512
+  chunk_overlap: 100
+  top_k: 5
+
+logging:
+  level: INFO
+  log_file: logs/project.log
