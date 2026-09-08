@@ -11,17 +11,20 @@ paths:
   logs: logs
 
 llm:
-  provider: huggingface
-  model_name: mistralai/Mistral-7B-Instruct-v0.3
-  temprature: 0.2
+  provider: local
+  model_name: Qwen2.5-3B-Instruct.gguf
+  model_path: models/Qwen2.5-3B-Instruct.gguf
+  temperature: 0.2
   max_tokens: 1024
+  context_window: 4096
+  gpu_layers: 0
 
 embedding:
   model_name: sentence-transformers/all-MiniLM-L6-v2
 
 rag:
   chunk_size: 512
-  chunk_overlap: 100
+  chunk_overlap: 50
   top_k: 5
 
 logging:

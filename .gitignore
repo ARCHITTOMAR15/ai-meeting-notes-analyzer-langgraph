@@ -29,3 +29,18 @@ data/processed/*
 .DS_Store
 Thumbs.db
 
+
+# ==========================
+# Local LLM Models (GGUF)
+# ==========================
+models/
+
+# GGUF model files
+*.gguf
+
+# Optional llama.cpp cache
+*.bin
+
+# Hugging Face cache (if created locally)
+.huggingface/
+cache/
