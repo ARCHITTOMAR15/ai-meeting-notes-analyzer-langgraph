@@ -13,9 +13,9 @@ paths:
 llm:
   provider: local
   model_name: Qwen2.5-3B-Instruct.gguf
-  model_path: models/Qwen2.5-3B-Instruct.gguf
+  model_path: models/qwen2.5-3b-instruct-q4_k_m.gguf
   temperature: 0.2
-  max_tokens: 1024
+  max_tokens: 500
   context_window: 4096
   gpu_layers: 0
 
