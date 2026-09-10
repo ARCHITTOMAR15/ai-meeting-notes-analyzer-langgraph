@@ -31,6 +31,7 @@ class MeetingLLM:
                 max_tokens=llm_config["max_tokens"],
                 n_ctx=llm_config["context_window"],
                 n_gpu_layers=llm_config["gpu_layers"],
+                stop=["\n\nThe", "\n\nExplanation", "\n\nSummary"],
                 verbose=False,
             )
 
