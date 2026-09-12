@@ -16,17 +16,6 @@ st.set_page_config(
 
 os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/huggingface")
 
-import importlib
-import subprocess
-import sys
-
-try:
-    importlib.import_module("reportlab")
-except ModuleNotFoundError:
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "reportlab==4.2.5"]
-    )
-
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
