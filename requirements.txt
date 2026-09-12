@@ -19,3 +19,4 @@ tqdm
 pytest
 rouge-score
 bert-score
+reportlab==4.4.3
