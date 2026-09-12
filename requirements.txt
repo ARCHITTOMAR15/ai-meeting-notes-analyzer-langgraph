@@ -34,7 +34,7 @@ numpy==2.3.3
 tqdm==4.67.1
 
 # PDF Export
-reportlab==4.4.3
+reportlab>=4.2.2,<5
 
 # Evaluation Metrics
 rouge-score==0.1.2
