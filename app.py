@@ -16,8 +16,12 @@ st.set_page_config(
 
 os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/huggingface")
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
+try:
+    from reportlab.platypus import SimpleDocTemplate, Paragraph
+    from reportlab.lib.styles import getSampleStyleSheet
+except Exception as e:
+    st.error(f"ReportLab import failed: {type(e).__name__}: {e}")
+    st.stop()
 
 from src.data_ingestion.loader import TranscriptLoader
 from src.preprocessing.cleaner import TranscriptCleaner
