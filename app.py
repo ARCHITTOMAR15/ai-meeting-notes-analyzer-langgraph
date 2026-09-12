@@ -10,14 +10,14 @@ import streamlit as st
 # MUST be before importing other project modules
 st.set_page_config(
     page_title="AI Meeting Notes Analyzer",
-    page_icon="📝",
     layout="wide",
 )
 
 os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/huggingface")
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
+from fpdf import FPDF
+
 
 from src.data_ingestion.loader import TranscriptLoader
 from src.preprocessing.cleaner import TranscriptCleaner
@@ -30,7 +30,7 @@ from src.graph.meeting_state import MeetingState
 
 
 
-st.title("📝 AI Meeting Notes Analyzer")
+st.title(" AI Meeting Notes Analyzer")
 st.caption("Upload a meeting transcript and generate AI-powered meeting notes using LangGraph.")
 
 # ----------------------------------------------------
@@ -48,70 +48,77 @@ with st.sidebar:
 # ----------------------------------------------------
 
 def generate_pdf(result):
-    """Generate a PDF containing the meeting analysis results."""
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
 
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer)
-    styles = getSampleStyleSheet()
-    elements = []
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "AI Meeting Notes Analyzer", ln=True)
 
-    # Title
-    elements.append(Paragraph("AI Meeting Notes Analyzer", styles["Title"]))
+    # Topics
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.ln(5)
+    pdf.cell(0, 10, "Discussion Topics", ln=True)
 
-    # Discussion Topics
-    elements.append(Paragraph("Discussion Topics", styles["Heading2"]))
+    pdf.set_font("Helvetica", size=12)
     for topic in result["topics"].topics:
-        elements.append(Paragraph(f"• {topic}", styles["BodyText"]))
+        pdf.multi_cell(0, 8, f"- {topic}")
 
-    # Meeting Summary
-    elements.append(Paragraph("Meeting Summary", styles["Heading2"]))
+    # Summary
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.ln(4)
+    pdf.cell(0, 10, "Meeting Summary", ln=True)
 
-    elements.append(Paragraph("Meeting Objective", styles["Heading3"]))
-    elements.append(
-        Paragraph(result["summary"].meeting_objective, styles["BodyText"])
-    )
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 8, "Meeting Objective", ln=True)
 
-    elements.append(Paragraph("Key Discussion Points", styles["Heading3"]))
+    pdf.set_font("Helvetica", size=12)
+    pdf.multi_cell(0, 8, result["summary"].meeting_objective)
+
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.ln(2)
+    pdf.cell(0, 8, "Key Discussion Points", ln=True)
+
+    pdf.set_font("Helvetica", size=12)
     for point in result["summary"].key_discussion_points:
-        elements.append(Paragraph(f"• {point}", styles["BodyText"]))
+        pdf.multi_cell(0, 8, f"- {point}")
 
-    elements.append(Paragraph("Decisions Taken", styles["Heading3"]))
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.ln(2)
+    pdf.cell(0, 8, "Decisions Taken", ln=True)
+
+    pdf.set_font("Helvetica", size=12)
     for decision in result["summary"].decisions_taken:
-        elements.append(Paragraph(f"• {decision}", styles["BodyText"]))
+        pdf.multi_cell(0, 8, f"- {decision}")
 
     # Action Items
-    elements.append(Paragraph("Action Items", styles["Heading2"]))
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.ln(4)
+    pdf.cell(0, 10, "Action Items", ln=True)
 
+    pdf.set_font("Helvetica", size=12)
     for item in result["action_items"].action_items:
-        elements.append(
-            Paragraph(
-                f"<b>Task:</b> {item.task}<br/>"
-                f"<b>Owner:</b> {item.owner}<br/>"
-                f"<b>Deadline:</b> {item.deadline}",
-                styles["BodyText"],
-            )
-        )
-        elements.append(Paragraph("<br/>", styles["BodyText"]))
+        pdf.multi_cell(0, 8, f"Task: {item.task}")
+        pdf.multi_cell(0, 8, f"Owner: {item.owner}")
+        pdf.multi_cell(0, 8, f"Deadline: {item.deadline}")
+        pdf.ln(2)
 
-    # Priority Classification
-    elements.append(Paragraph("Priority Classification", styles["Heading2"]))
+    # Priority
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.ln(4)
+    pdf.cell(0, 10, "Priority Classification", ln=True)
 
+    pdf.set_font("Helvetica", size=12)
     for item in result["priorities"].priorities:
-        elements.append(
-            Paragraph(
-                f"• <b>{item.task}</b> — {item.priority}",
-                styles["BodyText"],
-            )
-        )
+        pdf.multi_cell(0, 8, f"{item.task} - {item.priority}")
 
+    # Return bytes for Streamlit
+    pdf_bytes = pdf.output(dest="S")
 
+    if isinstance(pdf_bytes, str):
+       pdf_bytes = pdf_bytes.encode("latin-1")
 
-
-    doc.build(elements)
-    buffer.seek(0)
-
-    return buffer
-
+    return BytesIO(pdf_bytes)
 # ====================================================
 # ✅ ADD THESE LINES HERE
 # ====================================================
@@ -121,7 +128,10 @@ def load_embedding_model():
     """Load embedding model only once."""
     return EmbeddingModel.load_model()
 
-
+@st.cache_resource
+def load_workflow():
+    """Build LangGraph workflow only once."""
+    return MeetingWorkflow.build()
 
 # ----------------------------------------------------
 # File Upload
@@ -132,7 +142,7 @@ uploaded_file = st.file_uploader(
     type=["txt", "docx", "pdf"],
 )
 
-analyze_button = st.button("🚀 Analyze Meeting", use_container_width=True)
+analyze_button = st.button("Analyze Meeting", use_container_width=True)
 
 # ----------------------------------------------------
 # Backend Pipeline
@@ -180,7 +190,7 @@ if uploaded_file and analyze_button:
         }
 
         # Run Workflow
-        workflow = MeetingWorkflow.build()
+        workflow = load_workflow()
         result = workflow.invoke(state)
 
     st.success("Meeting analyzed successfully!")
@@ -189,7 +199,7 @@ if uploaded_file and analyze_button:
     # Topics
     # ------------------------------------------------
 
-    st.header("📌 Discussion Topics")
+    st.header(" Discussion Topics")
 
     for topic in result["topics"].topics:
         st.markdown(f"- {topic}")
@@ -198,7 +208,7 @@ if uploaded_file and analyze_button:
     # Summary
     # ------------------------------------------------
 
-    st.header("📝 Meeting Summary")
+    st.header(" Meeting Summary")
 
     st.subheader("Meeting Objective")
     st.write(result["summary"].meeting_objective)
@@ -217,7 +227,7 @@ if uploaded_file and analyze_button:
     # Action Items
     # ------------------------------------------------
 
-    st.header("✅ Action Items")
+    st.header(" Action Items")
 
     for item in result["action_items"].action_items:
         st.markdown(
@@ -235,7 +245,7 @@ if uploaded_file and analyze_button:
     # Priority Classification
     # ------------------------------------------------
 
-    st.header("🚨 Priority Classification")
+    st.header(" Priority Classification")
 
     for item in result["priorities"].priorities:
         st.markdown(f"**{item.task}** — `{item.priority}`")
@@ -244,7 +254,7 @@ if uploaded_file and analyze_button:
     # Download PDF
     # ------------------------------------------------
 
-    st.header("📄 Download Meeting Notes")
+    st.header(" Download Meeting Notes")
 
     pdf_file = generate_pdf(result)
 
