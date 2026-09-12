@@ -16,6 +16,17 @@ st.set_page_config(
 
 os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/huggingface")
 
+import importlib
+import subprocess
+import sys
+
+try:
+    importlib.import_module("reportlab")
+except ModuleNotFoundError:
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "reportlab==4.2.5"]
+    )
+
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
@@ -27,9 +38,6 @@ from src.vector_store.faiss_index import FAISSIndexManager
 from src.vector_store.retriever import TranscriptRetriever
 from src.graph.workflow import MeetingWorkflow
 from src.graph.meeting_state import MeetingState
-# ----------------------------------------------------
-# Page Configuration
-# ----------------------------------------------------
 
 
 
