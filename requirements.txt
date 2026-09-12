@@ -32,8 +32,7 @@ python-dotenv==1.1.1
 loguru==0.7.3
 
 
-# PDF Export
-fpdf2==2.8.4
+
 
 # GGUF LLM
 llama-cpp-python==0.3.16

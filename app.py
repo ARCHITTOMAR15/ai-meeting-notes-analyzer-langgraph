@@ -4,7 +4,7 @@
 import os
 import tempfile
 from pathlib import Path
-from io import BytesIO
+
 import streamlit as st
 
 # MUST be before importing other project modules
@@ -16,7 +16,7 @@ st.set_page_config(
 os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/huggingface")
 os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
 
-from fpdf import FPDF
+
 
 
 from src.data_ingestion.loader import TranscriptLoader
@@ -47,78 +47,60 @@ with st.sidebar:
 # PDF Generator
 # ----------------------------------------------------
 
-def generate_pdf(result):
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
+def generate_meeting_notes(result):
+    """Generate meeting notes as a downloadable text file."""
 
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, "AI Meeting Notes Analyzer", ln=True)
+    content = []
+    content.append("AI MEETING NOTES ANALYZER")
+    content.append("=" * 50)
+    content.append("")
 
-    # Topics
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.ln(5)
-    pdf.cell(0, 10, "Discussion Topics", ln=True)
-
-    pdf.set_font("Helvetica", size=12)
+    # Discussion Topics
+    content.append("DISCUSSION TOPICS")
+    content.append("-" * 25)
     for topic in result["topics"].topics:
-        pdf.multi_cell(0, 8, f"- {topic}")
+        content.append(f"• {topic}")
 
-    # Summary
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.ln(4)
-    pdf.cell(0, 10, "Meeting Summary", ln=True)
+    content.append("")
 
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 8, "Meeting Objective", ln=True)
+    # Meeting Summary
+    content.append("MEETING SUMMARY")
+    content.append("-" * 25)
 
-    pdf.set_font("Helvetica", size=12)
-    pdf.multi_cell(0, 8, result["summary"].meeting_objective)
+    content.append("Meeting Objective:")
+    content.append(result["summary"].meeting_objective)
+    content.append("")
 
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.ln(2)
-    pdf.cell(0, 8, "Key Discussion Points", ln=True)
-
-    pdf.set_font("Helvetica", size=12)
+    content.append("Key Discussion Points:")
     for point in result["summary"].key_discussion_points:
-        pdf.multi_cell(0, 8, f"- {point}")
+        content.append(f"• {point}")
 
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.ln(2)
-    pdf.cell(0, 8, "Decisions Taken", ln=True)
+    content.append("")
 
-    pdf.set_font("Helvetica", size=12)
+    content.append("Decisions Taken:")
     for decision in result["summary"].decisions_taken:
-        pdf.multi_cell(0, 8, f"- {decision}")
+        content.append(f"• {decision}")
+
+    content.append("")
 
     # Action Items
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.ln(4)
-    pdf.cell(0, 10, "Action Items", ln=True)
+    content.append("ACTION ITEMS")
+    content.append("-" * 25)
 
-    pdf.set_font("Helvetica", size=12)
     for item in result["action_items"].action_items:
-        pdf.multi_cell(0, 8, f"Task: {item.task}")
-        pdf.multi_cell(0, 8, f"Owner: {item.owner}")
-        pdf.multi_cell(0, 8, f"Deadline: {item.deadline}")
-        pdf.ln(2)
+        content.append(f"Task     : {item.task}")
+        content.append(f"Owner    : {item.owner}")
+        content.append(f"Deadline : {item.deadline}")
+        content.append("")
 
-    # Priority
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.ln(4)
-    pdf.cell(0, 10, "Priority Classification", ln=True)
+    # Priority Classification
+    content.append("PRIORITY CLASSIFICATION")
+    content.append("-" * 25)
 
-    pdf.set_font("Helvetica", size=12)
     for item in result["priorities"].priorities:
-        pdf.multi_cell(0, 8, f"{item.task} - {item.priority}")
+        content.append(f"• {item.task}  -->  {item.priority}")
 
-    # Return bytes for Streamlit
-    pdf_bytes = pdf.output(dest="S")
-
-    if isinstance(pdf_bytes, str):
-       pdf_bytes = pdf_bytes.encode("latin-1")
-
-    return BytesIO(pdf_bytes)
+    return "\n".join(content)
 # ====================================================
 # ✅ ADD THESE LINES HERE
 # ====================================================
@@ -256,16 +238,14 @@ if uploaded_file and analyze_button:
 
     st.header(" Download Meeting Notes")
 
-    pdf_file = generate_pdf(result)
+    meeting_notes = generate_meeting_notes(result)
 
     st.download_button(
-        label="⬇️ Download Meeting Notes as PDF",
-        data=pdf_file,
-        file_name="meeting_notes_summary.pdf",
-        mime="application/pdf",
-        use_container_width=True,
-    )
-
+      label="⬇️ Download Meeting Notes",
+      data=meeting_notes,
+      file_name="meeting_notes_summary.txt",
+     mime="text/plain",
+     use_container_width=True,)
 # ----------------------------------------------------
 # No File Uploaded
 # ----------------------------------------------------
