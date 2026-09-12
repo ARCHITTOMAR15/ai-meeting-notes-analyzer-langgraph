@@ -1,16 +1,24 @@
 
-import os
-os.environ["HF_HOME"] = os.getenv("HF_HOME","/tmp/huggingface")
 
+
+import os
 import tempfile
 from pathlib import Path
 from io import BytesIO
-
 import streamlit as st
+
+# MUST be before importing other project modules
+st.set_page_config(
+    page_title="AI Meeting Notes Analyzer",
+    page_icon="📝",
+    layout="wide",
+)
+
+os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/huggingface")
+
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
-from src.config.config import load_config
 from src.data_ingestion.loader import TranscriptLoader
 from src.preprocessing.cleaner import TranscriptCleaner
 from src.preprocessing.chunker import TranscriptChunker
@@ -19,16 +27,11 @@ from src.vector_store.faiss_index import FAISSIndexManager
 from src.vector_store.retriever import TranscriptRetriever
 from src.graph.workflow import MeetingWorkflow
 from src.graph.meeting_state import MeetingState
-
 # ----------------------------------------------------
 # Page Configuration
 # ----------------------------------------------------
 
-st.set_page_config(
-    page_title="AI Meeting Notes Analyzer",
-    page_icon="📝",
-    layout="wide",
-)
+
 
 st.title("📝 AI Meeting Notes Analyzer")
 st.caption("Upload a meeting transcript and generate AI-powered meeting notes using LangGraph.")
