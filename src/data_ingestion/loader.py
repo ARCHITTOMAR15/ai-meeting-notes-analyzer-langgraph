@@ -1,8 +1,12 @@
 
 from pathlib import Path
-from pypdf import PdfReader
+
+
+from PyPDF2 import PdfReader
 from docx import Document as DocxDocument
 from llama_index.core.schema import Document
+
+
 
 
 class TranscriptLoader:
