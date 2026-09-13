@@ -7,9 +7,11 @@ from src.config.config import load_config
 
 def get_logger(name:str)->logging.Logger:
 
-    config= load_config()
-    log_dir=Path(config["paths"]["logs"])
-    log_dir.mkdir(parents=True,exist_ok=True)
+    config = load_config()
+
+    #Streamlit Cloud writable directory
+    log_dir = Path("/tmp/logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     log_file=log_dir/"project.log"
 

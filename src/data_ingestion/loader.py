@@ -1,12 +1,7 @@
 
 from pathlib import Path
-
-
-from PyPDF2 import PdfReader
 from docx import Document as DocxDocument
 from llama_index.core.schema import Document
-
-
 
 
 class TranscriptLoader:
@@ -19,13 +14,24 @@ class TranscriptLoader:
         if suffix == ".txt":
             text = path.read_text(encoding="utf-8")
 
-        elif suffix == ".pdf":
-            reader = PdfReader(file_path)
-            text = "\n".join(page.extract_text() or "" for page in reader.pages)
-
         elif suffix == ".docx":
             doc = DocxDocument(file_path)
             text = "\n".join(p.text for p in doc.paragraphs)
+
+        elif suffix == ".pdf":
+            # Import only when a PDF is uploaded
+            try:
+                from PyPDF2 import PdfReader
+            except ModuleNotFoundError:
+                try:
+                    from pypdf import PdfReader
+                except ModuleNotFoundError:
+                    raise ImportError(
+                        "PDF support is unavailable because neither PyPDF2 nor pypdf is installed."
+                    )
+
+            reader = PdfReader(file_path)
+            text = "\n".join(page.extract_text() or "" for page in reader.pages)
 
         else:
             raise ValueError(f"Unsupported file format: {suffix}")

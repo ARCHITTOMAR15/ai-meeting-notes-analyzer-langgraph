@@ -28,9 +28,10 @@ class MeetingLLM:
                     #f"GGUF model not found at: {model_path}"
                 #)
             model_path = hf_hub_download(
-                  repo_id="Qwen/Qwen2.5-3B-Instruct-GGUF",
-                  filename="qwen2.5-3b-instruct-q4_k_m.gguf",
-                  cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),)
+                 repo_id="Qwen/Qwen2.5-3B-Instruct-GGUF",
+                 filename="qwen2.5-3b-instruct-q4_k_m.gguf",
+                 cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
+                 local_dir_use_symlinks=False,)
 
 
 
