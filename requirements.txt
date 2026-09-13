@@ -7,6 +7,7 @@ langgraph==0.6.7
 
 # LlamaIndex
 llama-index==0.12.52
+llama-index-core==0.12.52
 llama-index-embeddings-huggingface==0.5.5
 llama-index-vector-stores-faiss==0.3.0
 
