@@ -1,111 +1,31 @@
 
 from pathlib import Path
-import sys
-
-from llama_index.core import SimpleDirectoryReader
+from pypdf import PdfReader
+from docx import Document as DocxDocument
 from llama_index.core.schema import Document
-
-from src.utils.exception import ProjectException
-from src.utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 class TranscriptLoader:
 
+    @staticmethod
+    def load_document(file_path: str):
+        path = Path(file_path)
+        suffix = path.suffix.lower()
 
-    SUPPORTED_FORMATS = {".txt", ".docx", ".pdf"}
+        if suffix == ".txt":
+            text = path.read_text(encoding="utf-8")
 
-    @classmethod
-    def load_document(cls, file_path: str) -> Document:
+        elif suffix == ".pdf":
+            reader = PdfReader(file_path)
+            text = "\n".join(page.extract_text() or "" for page in reader.pages)
 
+        elif suffix == ".docx":
+            doc = DocxDocument(file_path)
+            text = "\n".join(p.text for p in doc.paragraphs)
 
-        try:
-            path = Path(file_path)
+        else:
+            raise ValueError(f"Unsupported file format: {suffix}")
 
-            # File existence check
-            if not path.exists():
-                raise FileNotFoundError(
-                    f"Transcript not found: {file_path}"
-                )
-
-            # File format validation
-            if path.suffix.lower() not in cls.SUPPORTED_FORMATS:
-                raise ValueError(
-                    f"Unsupported file format: {path.suffix}. "
-                    f"Supported formats: {sorted(cls.SUPPORTED_FORMATS)}"
-                )
-
-            # Load document
-            reader = SimpleDirectoryReader(
-                input_files=[str(path)],
-                filename_as_id=True,
-            )
-
-            documents = reader.load_data()
-
-            if len(documents) != 1:
-                raise ValueError(
-                    "Expected exactly one transcript document."
-                )
-
-            document = documents[0]
-
-            # Add custom metadata
-
-
-            logger.info(f"Transcript loaded successfully: {path.name}")
-
-            return document
-
-        except Exception as error:
-            logger.error(str(error))
-            raise ProjectException(str(error), sys)
-
-    @classmethod
-    def load_documents(cls, folder_path: str) -> list[Document]:
-
-
-        try:
-            path = Path(folder_path)
-
-            # Folder existence check
-            if not path.exists():
-                raise FileNotFoundError(
-                    f"Transcript folder not found: {folder_path}"
-                )
-
-            # Ensure it is a directory
-            if not path.is_dir():
-                raise NotADirectoryError(
-                    f"Expected a folder path, got: {folder_path}"
-                )
-
-            # Load all supported documents
-            reader = SimpleDirectoryReader(
-                input_dir=str(path),
-                filename_as_id=True,
-            )
-
-            documents = reader.load_data()
-
-            # Check if any documents were loaded
-            if len(documents) == 0:
-                raise ValueError(
-                    "No supported transcript files found in the folder."
-                )
-
-            # Add custom metadata to every document
-
-
-            logger.info(
-                f"Loaded {len(documents)} transcripts successfully from: {path.name}"
-            )
-
-            return documents
-
-        except Exception as error:
-            logger.error(str(error))
-            raise ProjectException(str(error), sys)
+        return Document(text=text)
 
 

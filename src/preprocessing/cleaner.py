@@ -24,6 +24,6 @@ class TranscriptCleaner:
             return cleaned_document
 
         except Exception as e:
-            logger.e(str(error))
-            raise ProjectException(str(error), sys)
+            logger.error(str(e))
+            raise ProjectException(str(e), sys)
 
