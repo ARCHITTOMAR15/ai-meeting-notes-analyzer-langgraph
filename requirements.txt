@@ -6,7 +6,7 @@ langchain-community==0.3.29
 langgraph==0.6.7
 
 # LlamaIndex
-# LlamaIndex
+
 llama-index-core==0.12.52
 llama-index-readers-file==0.4.11
 llama-index-embeddings-huggingface==0.5.5
@@ -30,9 +30,10 @@ python-docx==1.2.0
 docx2txt==0.9
 
 # Utilities
-PyYAML==6.0.2
+pyyaml==6.0.2
 python-dotenv==1.1.1
 loguru==0.7.3
+pandas==2.3.2
 
 
 

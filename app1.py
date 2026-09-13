@@ -1,14 +1,15 @@
 
 
 import os
-os.environ["HF_HOME"] = "C:/Users/Lenovo/.cache/huggingface"
+os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/huggingface")
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
 
 import tempfile
 from pathlib import Path
 
 import streamlit as st
 
-from src.config.config import load_config
+
 from src.data_ingestion.loader import TranscriptLoader
 from src.preprocessing.cleaner import TranscriptCleaner
 from src.preprocessing.chunker import TranscriptChunker
