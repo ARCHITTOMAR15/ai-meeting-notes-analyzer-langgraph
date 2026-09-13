@@ -25,7 +25,7 @@ safetensors==0.6.2
 # Document Loading
 PyPDF2==3.0.1
 python-docx==1.2.0
-docx2txt==0.9
+
 
 # Utilities
 pyyaml==6.0.2
@@ -34,4 +34,4 @@ loguru==0.7.3
 pandas==2.2.3
 
 # GGUF
-llama-cpp-python==0.3.16
+llama-cpp-python==0.3.15
