@@ -22,7 +22,7 @@ MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
 
 
 class MeetingLLM:
-    @classmethod
+    @staticmethod
     @st.cache_resource(show_spinner=False)
     def load_model():
         """
