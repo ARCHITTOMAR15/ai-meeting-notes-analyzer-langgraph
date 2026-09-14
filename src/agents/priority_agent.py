@@ -26,6 +26,9 @@ class PriorityAgent:
 
             response = chain.invoke({"transcript": transcript})
 
+            if hasattr(response, "content"):
+                response = response.content
+
             logger.info(f"RAW PRIORITY RESPONSE:\n{response}")
 
             priorities = []

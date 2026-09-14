@@ -35,6 +35,9 @@ class TopicAgent:
 
             response = chain.invoke({"transcript": transcript})
 
+            if hasattr(response, "content"):
+                response = response.content
+
             logger.info(f"RAW TOPIC RESPONSE:\n{response}")
 
             # ---------------- Try JSON first ----------------

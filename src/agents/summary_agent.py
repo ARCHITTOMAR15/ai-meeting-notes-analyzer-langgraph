@@ -26,6 +26,9 @@ class SummaryAgent:
 
             response = chain.invoke({"transcript": transcript})
 
+            if hasattr(response, "content"):
+                response = response.content
+
             logger.info("Summary Agent executed successfully.")
 
             return response.strip()

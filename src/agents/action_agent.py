@@ -27,6 +27,9 @@ class ActionAgent:
 
             response = chain.invoke({"transcript": transcript})
 
+            if hasattr(response, "content"):
+                response = response.content
+
             logger.info(f"RAW ACTION RESPONSE:\n{response}")
 
             actions = []
