@@ -1,3 +1,5 @@
+
+from langchain_core.prompts import PromptTemplate
 SUMMARY_PROMPT = PromptTemplate(
     template="""
 You are an expert AI meeting analyst.

@@ -1,3 +1,4 @@
+from langchain_core.prompts import PromptTemplate
 PRIORITY_PROMPT = PromptTemplate(
     template="""
 Identify every task discussed in this meeting.

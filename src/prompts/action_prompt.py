@@ -1,3 +1,4 @@
+from langchain_core.prompts import PromptTemplate
 ACTION_PROMPT = PromptTemplate(
     template="""
 Extract all action items from this meeting.
