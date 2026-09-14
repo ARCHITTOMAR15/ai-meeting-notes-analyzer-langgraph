@@ -1,31 +1,53 @@
 
-from pathlib import Path
+import os
+import sys
+
+from langchain_core.documents import Document
+from langchain_community.document_loaders import (
+    PyPDFLoader,
+    TextLoader,
+    Docx2txtLoader,
+)
+
+from src.utils.exception import ProjectException
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class TranscriptLoader:
-    @staticmethod
-    def load_document(file_path: str):
-        # Import only when needed
-        from llama_index.core.schema import Document
 
-        path = Path(file_path)
-        suffix = path.suffix.lower()
+    @classmethod
+    def load_document(cls, file_path: str) -> Document:
+        """
+        Load TXT, PDF or DOCX transcript and return a single LangChain Document.
+        """
 
-        if suffix == ".txt":
-            text = path.read_text(encoding="utf-8")
+        try:
+            extension = os.path.splitext(file_path)[1].lower()
 
-        elif suffix == ".docx":
-            from docx import Document as DocxDocument
-            doc = DocxDocument(file_path)
-            text = "\n".join(p.text for p in doc.paragraphs)
+            if extension == ".pdf":
+                loader = PyPDFLoader(file_path)
 
-        elif suffix == ".pdf":
-            from PyPDF2 import PdfReader
-            reader = PdfReader(file_path)
-            text = "\n".join(page.extract_text() or "" for page in reader.pages)
+            elif extension == ".txt":
+                loader = TextLoader(file_path, encoding="utf-8")
 
-        else:
-            raise ValueError(f"Unsupported file format: {suffix}")
+            elif extension == ".docx":
+                loader = Docx2txtLoader(file_path)
 
-        return Document(text=text)
+            else:
+                raise ValueError(f"Unsupported file format: {extension}")
+
+            documents = loader.load()
+
+            # Merge all pages into one transcript
+            transcript = "\n\n".join(doc.page_content for doc in documents)
+
+            logger.info(f"Transcript loaded successfully: {extension}")
+
+            return Document(page_content=transcript)
+
+        except Exception as error:
+            logger.error(str(error))
+            raise ProjectException(str(error), sys)
 
