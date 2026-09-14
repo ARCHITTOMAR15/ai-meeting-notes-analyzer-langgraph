@@ -124,7 +124,7 @@ if analyze_button:
 
             # 6. Initial LangGraph state
             state = MeetingState(
-                transcript=cleaned_document.text,
+                transcript=cleaned_document.page_content,
                 retriever=retriever,
             )
 
