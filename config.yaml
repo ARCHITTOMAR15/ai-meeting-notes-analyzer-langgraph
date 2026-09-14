@@ -15,7 +15,7 @@ llm:
   model_name: Qwen/Qwen2.5-0.5B-Instruct
   # model_path: models/qwen2.5-3b-instruct-q4_k_m.gguf
   temperature: 0.2
-  max_tokens: 256
+  max_tokens: 128
   context_window: 2048
   gpu_layers: 0
 
