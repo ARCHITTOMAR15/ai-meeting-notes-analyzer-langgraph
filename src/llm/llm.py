@@ -1,15 +1,9 @@
-
 import os
 import sys
 import streamlit as st
 import torch
 
-from transformers import (
-    AutoTokenizer,
-    AutoModelForCausalLM,
-    pipeline,
-)
-
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from langchain_huggingface import HuggingFacePipeline
 
 from src.config.config import load_config
@@ -21,54 +15,49 @@ logger = get_logger(__name__)
 MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
 
 
+# ---------------- Cached Model Loader ---------------- #
+@st.cache_resource(show_spinner=False)
+def _cached_llm():
+    config = load_config()
+    llm_config = config["llm"]
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        MODEL_NAME,
+        cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
+    )
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_NAME,
+        cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
+        torch_dtype=torch.float32,
+        device_map="cpu",
+        low_cpu_mem_usage=True,
+    )
+
+    text_pipeline = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        max_new_tokens=llm_config["max_tokens"],
+        temperature=llm_config["temperature"],
+        do_sample=False,
+        repetition_penalty=1.1,
+        pad_token_id=tokenizer.eos_token_id,
+        truncation=True,
+    )
+
+    logger.info(f"Loaded Hugging Face model: {MODEL_NAME}")
+
+    return HuggingFacePipeline(pipeline=text_pipeline)
+
+
+# ---------------- Class used by Agents ---------------- #
 class MeetingLLM:
-    @staticmethod
-    @st.cache_resource(show_spinner=False)
-    def load_model():
-        """
-        Loads the Hugging Face Qwen 0.5B model once and caches it for
-        the entire Streamlit session.
-        """
 
+    @classmethod
+    def load_model(cls):
         try:
-            config = load_config()
-            llm_config = config["llm"]
-
-            logger.info(f"Loading Hugging Face model: {MODEL_NAME}")
-
-            # Tokenizer
-            tokenizer = AutoTokenizer.from_pretrained(
-                MODEL_NAME,
-                cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
-            )
-
-            # Model
-            model = AutoModelForCausalLM.from_pretrained(
-                MODEL_NAME,
-                cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
-                torch_dtype=torch.float32,      # CPU compatible
-                device_map="cpu",
-                low_cpu_mem_usage=True,
-            )
-
-            # Hugging Face text-generation pipeline
-            text_pipeline = pipeline(
-                task="text-generation",
-                model=model,
-                tokenizer=tokenizer,
-                max_new_tokens=llm_config["max_tokens"],
-                temperature=llm_config["temperature"],
-                do_sample=False,
-                repetition_penalty=1.1,
-                pad_token_id=tokenizer.eos_token_id,
-                truncation=True,
-            )
-
-            llm = HuggingFacePipeline(pipeline=text_pipeline)
-
-            logger.info(f"Successfully loaded LLM: {MODEL_NAME}")
-
-            return llm
+            return _cached_llm()
 
         except Exception as error:
             logger.error(str(error))
