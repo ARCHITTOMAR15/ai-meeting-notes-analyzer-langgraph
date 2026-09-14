@@ -11,6 +11,9 @@ import streamlit as st
 os.environ["HF_HOME"] = "/tmp/huggingface"
 os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
 
+# -------------------------------------------------------------------
+# Page Config
+# -------------------------------------------------------------------
 st.set_page_config(
     page_title="AI Meeting Notes Analyzer",
     page_icon="📝",
@@ -18,123 +21,140 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------------
-# Cached Resources (Heavy imports happen here)
+# Cached Heavy Resources
 # -------------------------------------------------------------------
-@st.cache_resource(show_spinner="Loading embedding model...")
-def load_embedding_model():
+@st.cache_resource(show_spinner=False)
+def get_embedding_model():
     from src.vector_store.embedding_model import EmbeddingModel
     return EmbeddingModel.load_model()
 
 
-@st.cache_resource(show_spinner="Loading AI workflow...")
-def load_workflow():
+@st.cache_resource(show_spinner=False)
+def get_workflow():
     from src.graph.workflow import MeetingWorkflow
     return MeetingWorkflow.build()
 
-
-embedding_model = load_embedding_model()
-workflow = load_workflow()
 
 # -------------------------------------------------------------------
 # UI
 # -------------------------------------------------------------------
 st.title("📝 AI Meeting Notes Analyzer")
-st.markdown(
-    """
-Upload a meeting transcript (**TXT / PDF / DOCX**) and generate:
 
+st.markdown("""
+Upload a meeting transcript (**TXT / PDF / DOCX**) and generate AI-powered insights.
+
+**Features**
 - 📋 Meeting Summary
 - ✅ Action Items
 - 🎯 Priorities
 - 😊 Sentiment Analysis
 - 🗂 Topics Discussed
 - ❓ Question & Answer
-"""
-)
+""")
 
 uploaded_file = st.file_uploader(
     "Upload Transcript",
     type=["txt", "pdf", "docx"]
 )
 
-analyze_button = st.button("🚀 Analyze Meeting", use_container_width=True)
+analyze_button = st.button(
+    "🚀 Analyze Meeting",
+    use_container_width=True,
+    type="primary"
+)
 
 # -------------------------------------------------------------------
 # Analysis Pipeline
 # -------------------------------------------------------------------
-if uploaded_file and analyze_button:
+if analyze_button:
 
-    # Lazy imports (important for Streamlit Cloud startup)
-    from src.data_ingestion.loader import TranscriptLoader
-    from src.preprocessing.cleaner import TranscriptCleaner
-    from src.preprocessing.chunker import TranscriptChunker
-    from src.vector_store.faiss_index import FAISSIndexManager
-    from src.vector_store.retriever import TranscriptRetriever
-    from src.graph.meeting_state import MeetingState
+    if uploaded_file is None:
+        st.warning("⚠️ Please upload a meeting transcript first.")
+        st.stop()
 
-    with st.spinner("Analyzing meeting transcript..."):
+    result = None
+    transcript_path = None
 
-        # Save uploaded file temporarily
+    try:
+        # -----------------------------
+        # Save uploaded file
+        # -----------------------------
         suffix = Path(uploaded_file.name).suffix
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
             temp_file.write(uploaded_file.read())
             transcript_path = temp_file.name
 
-        try:
-            # 1. Load Transcript
+        # -----------------------------
+        # Load AI Models (Cached Once)
+        # -----------------------------
+        with st.spinner("🔄 Loading AI models (first run may take 1-2 minutes)..."):
+            embedding_model = get_embedding_model()
+            workflow = get_workflow()
+
+        # Lazy imports (faster startup)
+        from src.data_ingestion.loader import TranscriptLoader
+        from src.preprocessing.cleaner import TranscriptCleaner
+        from src.preprocessing.chunker import TranscriptChunker
+        from src.vector_store.faiss_index import FAISSIndexManager
+        from src.vector_store.retriever import TranscriptRetriever
+        from src.graph.meeting_state import MeetingState
+
+        # -----------------------------
+        # Meeting Analysis
+        # -----------------------------
+        with st.spinner("🤖 Analyzing meeting transcript..."):
+
+            # 1. Load transcript
             document = TranscriptLoader.load_document(transcript_path)
 
-            # 2. Clean Transcript
+            # 2. Clean transcript
             cleaned_document = TranscriptCleaner.clean(document)
 
-            # 3. Chunk Transcript
+            # 3. Split transcript into chunks
             chunks = TranscriptChunker.split(cleaned_document)
 
-            # 4. Create FAISS Index
+            # 4. Create FAISS vector index
             index_manager = FAISSIndexManager(
                 embedding_model=embedding_model
             )
-
             index_manager.create_index(chunks)
 
             # 5. Retriever
             retriever = TranscriptRetriever(index_manager)
 
-            # 6. Initial State
+            # 6. Initial LangGraph state
             state = MeetingState(
                 transcript=cleaned_document.text,
                 retriever=retriever,
             )
 
-            # 7. LangGraph Workflow
+            # 7. Execute LangGraph workflow
             result = workflow.invoke(state)
 
-            st.success("Meeting analyzed successfully!")
+        st.success("✅ Meeting analyzed successfully!")
 
-        except Exception as e:
-            st.error(f"Analysis failed: {str(e)}")
-            st.exception(e)
+    except Exception as e:
+        st.error("❌ Analysis failed.")
+        st.exception(e)
 
-        finally:
-            if os.path.exists(transcript_path):
-                os.remove(transcript_path)
+    finally:
+        if transcript_path and os.path.exists(transcript_path):
+            os.remove(transcript_path)
 
     # ----------------------------------------------------------------
     # Results
     # ----------------------------------------------------------------
-    if result:
+    if result is not None:
 
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-            [
-                "📋 Summary",
-                "✅ Action Items",
-                "🎯 Priorities",
-                "😊 Sentiment",
-                "🗂 Topics",
-                "❓ Q&A",
-            ]
-        )
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            "📋 Summary",
+            "✅ Action Items",
+            "🎯 Priorities",
+            "😊 Sentiment",
+            "🗂 Topics",
+            "❓ Q&A",
+        ])
 
         with tab1:
             st.markdown(result.get("summary", "No summary generated."))
@@ -154,9 +174,9 @@ if uploaded_file and analyze_button:
         with tab6:
             st.markdown(result.get("qa", "No Q&A generated."))
 
-        # ------------------------------------------------------------
-        # TXT Download (No PDF dependency)
-        # ------------------------------------------------------------
+        # -----------------------------
+        # Download Notes
+        # -----------------------------
         output_text = f"""
 ===========================
 AI MEETING NOTES ANALYZER

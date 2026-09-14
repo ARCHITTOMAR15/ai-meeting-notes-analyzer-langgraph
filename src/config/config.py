@@ -8,7 +8,10 @@ from pathlib import Path
 import yaml
 
 
-CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "config.yaml"
+from pathlib import Path
+
+# config.yaml is located in the project root
+CONFIG_PATH = Path(__file__).resolve().parents[2] / "config.yaml"
 
 def load_config() -> dict:
     """
