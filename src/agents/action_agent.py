@@ -24,7 +24,7 @@ class ActionAgent:
             parser = OutputParser.action_parser()
 
             def retrieve_context(_):
-                results = retriever.retrieve(cls.QUERY)
+                results = retriever.invoke(cls.QUERY)
 
                 return "\n\n".join(doc.page_content for doc in results)
 
