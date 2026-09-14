@@ -15,7 +15,7 @@ os.environ["TRANSFORMERS_CACHE"] = "/tmp/huggingface"
 # Project Imports
 # -----------------------------
 from src.data_ingestion.loader import TranscriptLoader
-from src.preprocessing.cleaner import TranscriptCleaner
+#from src.preprocessing.cleaner import TranscriptCleaner
 from src.preprocessing.chunker import TranscriptChunker
 from src.vector_store.embedding_model import EmbeddingModel
 from src.vector_store.faiss_index import FAISSIndexManager
@@ -145,7 +145,8 @@ if uploaded_file and analyze_button:
         document = TranscriptLoader.load_document(transcript_path)
 
         # Clean transcript
-        clean_document = TranscriptCleaner.clean(document)
+        #clean_document = TranscriptCleaner.clean(document)
+        clean_document=document
 
         # Chunk transcript
         nodes = TranscriptChunker.create_nodes(clean_document)
