@@ -1,10 +1,11 @@
 
+import json
+import re
 import sys
 
 from langchain_core.output_parsers import StrOutputParser
 
 from src.llm.llm import MeetingLLM
-from src.llm.output_parser import OutputParser
 from src.prompts.topic_prompt import TOPIC_PROMPT
 from src.utils.exception import ProjectException
 from src.utils.logger import get_logger
@@ -20,39 +21,35 @@ class TopicAgent:
     def invoke(cls, retriever):
 
         try:
-            # Load cached Hugging Face LLM
             llm = MeetingLLM.load_model()
 
-            # Pydantic parser
-            parser = OutputParser.topic_parser()
-
-            # Retrieve relevant transcript chunks
             results = retriever.invoke(cls.QUERY)
 
-            transcript = "\n\n".join(
-                doc.page_content for doc in results
-            )
+            transcript = "\n\n".join(doc.page_content for doc in results)
 
-            # Prompt → LLM → String
             chain = (
                 TOPIC_PROMPT
                 | llm
                 | StrOutputParser()
             )
 
-            # Pass transcript and JSON format instructions
-            response = chain.invoke({
-                "transcript": transcript,
-                "format_instructions": parser.get_format_instructions(),
-            })
+            response = chain.invoke({"transcript": transcript})
+
+            logger.info(f"RAW TOPIC RESPONSE:\n{response}")
+
+            match = re.search(r"\{.*\}", response, re.DOTALL)
+
+            if not match:
+                raise ValueError("No valid JSON returned by LLM.")
+
+            parsed = json.loads(match.group())
 
             logger.info("Topic Agent executed successfully.")
 
-            # Parse JSON response into TopicOutput
-            parsed = parser.parse(response)
-
-            return parsed.topics
+            return parsed["topics"]
 
         except Exception as error:
             logger.error(str(error))
             raise ProjectException(str(error), sys)
+
+

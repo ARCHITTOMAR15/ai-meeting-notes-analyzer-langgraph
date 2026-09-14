@@ -1,16 +1,38 @@
 from langchain_core.prompts import PromptTemplate
+
 ACTION_PROMPT = PromptTemplate(
     template="""
-Extract all action items from this meeting.
+You are an expert AI meeting analyst.
 
-Include task owner and deadline if mentioned.
+Extract all action items from this meeting transcript.
 
-Transcript:
+For every action item include:
+- task
+- owner
+- deadline
+
+If owner or deadline is missing, use:
+"Not Assigned"
+"Not Mentioned"
+
+Meeting Transcript:
 {transcript}
 
 Return ONLY valid JSON.
 
-{format_instructions}
+{{
+    "action_items": [
+        {{
+            "task": "Complete project report",
+            "owner": "John",
+            "deadline": "Friday"
+        }}
+    ]
+}}
+
+Do not add explanations.
+Do not use markdown.
+Do not wrap JSON inside ```json.
 """,
-    input_variables=["transcript", "format_instructions"],
+    input_variables=["transcript"],
 )

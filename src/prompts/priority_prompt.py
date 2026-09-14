@@ -1,16 +1,33 @@
 from langchain_core.prompts import PromptTemplate
+
 PRIORITY_PROMPT = PromptTemplate(
     template="""
-Identify every task discussed in this meeting.
+You are an expert AI meeting analyst.
 
-Classify each task as High, Medium, or Low priority.
+Identify every task discussed in this meeting transcript.
 
-Transcript:
+Classify each task as:
+- High
+- Medium
+- Low
+
+Meeting Transcript:
 {transcript}
 
 Return ONLY valid JSON.
 
-{format_instructions}
+{{
+    "priorities": [
+        {{
+            "task": "Finish deployment",
+            "priority": "High"
+        }}
+    ]
+}}
+
+Do not add explanations.
+Do not use markdown.
+Do not wrap JSON inside ```json.
 """,
-    input_variables=["transcript", "format_instructions"],
+    input_variables=["transcript"],
 )
