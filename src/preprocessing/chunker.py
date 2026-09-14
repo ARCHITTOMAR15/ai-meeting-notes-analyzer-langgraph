@@ -1,6 +1,10 @@
 
 import sys
 
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from src.config.config import load_config
 from src.utils.exception import ProjectException
 from src.utils.logger import get_logger
 
@@ -9,22 +13,22 @@ logger = get_logger(__name__)
 
 class TranscriptChunker:
 
-    @staticmethod
-    def split(document, chunk_size=512, chunk_overlap=50):
+    @classmethod
+    def split(cls, document):
         try:
-            text = document.text if hasattr(document, "text") else str(document)
+            config = load_config()["rag"]
 
-            chunks = []
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=config["chunk_size"],
+                chunk_overlap=config["chunk_overlap"]
+            )
 
-            start = 0
-            while start < len(text):
-                end = start + chunk_size
-                chunks.append(text[start:end])
-                start += chunk_size - chunk_overlap
+            chunks = splitter.split_documents([document])
 
             logger.info(f"Created {len(chunks)} transcript chunks.")
+
             return chunks
 
-        except Exception as e:
-            logger.exception("Chunking failed.")
-            raise ProjectException(e, sys)
+        except Exception as error:
+            logger.error(str(error))
+            raise ProjectException(str(error), sys)
