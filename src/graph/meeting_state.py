@@ -1,17 +1,24 @@
 
 from typing import TypedDict
 
-from src.schema.action_schema import ActionOutput
-from src.schema.priority_schema import PriorityOutput
-from src.schema.summary_schema import SummaryOutput
-from src.schema.topic_schema import TopicOutput
+
+class ActionItem(TypedDict):
+    task: str
+    owner: str
+    deadline: str
+
+
+class PriorityItem(TypedDict):
+    task: str
+    priority: str
 
 
 class MeetingState(TypedDict):
-    retriever:object
+    # Input
+    retriever: object
 
-    topics:TopicOutput|None
-    summary:SummaryOutput|None
-    action_items:ActionOutput|None
-    priorities:PriorityOutput|None
-
+    # LangGraph outputs
+    topics: list[str] | None
+    summary: str | None
+    action_items: list[ActionItem] | None
+    priorities: list[PriorityItem] | None

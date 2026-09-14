@@ -1,4 +1,3 @@
-import json
 import re
 import sys
 
@@ -14,39 +13,56 @@ logger = get_logger(__name__)
 
 class ActionAgent:
 
-    QUERY = "Extract all action items, task owners and deadlines from this meeting."
+    QUERY = "Extract action items from this meeting."
 
     @classmethod
     def invoke(cls, retriever):
-
         try:
             llm = MeetingLLM.load_model()
 
-            results = retriever.invoke(cls.QUERY)
+            docs = retriever.invoke(cls.QUERY)
+            transcript = "\n\n".join(doc.page_content for doc in docs)
 
-            transcript = "\n\n".join(doc.page_content for doc in results)
-
-            chain = (
-                ACTION_PROMPT
-                | llm
-                | StrOutputParser()
-            )
+            chain = ACTION_PROMPT | llm | StrOutputParser()
 
             response = chain.invoke({"transcript": transcript})
 
             logger.info(f"RAW ACTION RESPONSE:\n{response}")
 
-            match = re.search(r"\{.*\}", response, re.DOTALL)
+            actions = []
 
-            if not match:
-                raise ValueError("No valid JSON returned by LLM.")
+            task = owner = deadline = None
 
-            parsed = json.loads(match.group())
+            for line in response.splitlines():
+                line = line.strip()
 
-            logger.info("Action Agent executed successfully.")
+                if line.lower().startswith("task:"):
+                    if task:
+                        actions.append({
+                            "task": task,
+                            "owner": owner or "Not Assigned",
+                            "deadline": deadline or "Not Mentioned",
+                        })
 
-            return parsed["action_items"]
+                    task = line.split(":", 1)[1].strip()
+                    owner = deadline = None
+
+                elif line.lower().startswith("owner:"):
+                    owner = line.split(":", 1)[1].strip()
+
+                elif line.lower().startswith("deadline:"):
+                    deadline = line.split(":", 1)[1].strip()
+
+            if task:
+                actions.append({
+                    "task": task,
+                    "owner": owner or "Not Assigned",
+                    "deadline": deadline or "Not Mentioned",
+                })
+
+            return actions
 
         except Exception as error:
             logger.error(str(error))
             raise ProjectException(str(error), sys)
+

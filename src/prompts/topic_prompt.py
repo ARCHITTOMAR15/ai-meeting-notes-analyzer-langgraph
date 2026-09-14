@@ -4,25 +4,22 @@ TOPIC_PROMPT = PromptTemplate(
     template="""
 You are an expert AI meeting analyst.
 
-Analyze the meeting transcript below and identify the main discussion topics.
+Extract ONLY the main discussion topics from the meeting transcript.
 
 Meeting Transcript:
 {transcript}
 
-IMPORTANT:
-Return ONLY valid JSON in this exact format.
+Return between 3 and 8 short topic names.
 
-{{
-    "topics": [
-        "Topic 1",
-        "Topic 2",
-        "Topic 3"
-    ]
-}}
+Example output:
 
-Do not add explanations.
-Do not use markdown.
-Do not wrap JSON inside ```json.
+Budget Planning
+Project Timeline
+Client Feedback
+Team Responsibilities
+
+Do NOT explain anything.
+Do NOT use markdown.
 """,
     input_variables=["transcript"],
 )

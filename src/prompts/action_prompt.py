@@ -4,35 +4,19 @@ ACTION_PROMPT = PromptTemplate(
     template="""
 You are an expert AI meeting analyst.
 
-Extract all action items from this meeting transcript.
+Extract every action item from the meeting.
 
-For every action item include:
-- task
-- owner
-- deadline
+For each task provide exactly this format:
 
-If owner or deadline is missing, use:
-"Not Assigned"
-"Not Mentioned"
+Task: <task>
+Owner: <owner or Not Assigned>
+Deadline: <deadline or Not Mentioned>
 
 Meeting Transcript:
 {transcript}
 
-Return ONLY valid JSON.
-
-{{
-    "action_items": [
-        {{
-            "task": "Complete project report",
-            "owner": "John",
-            "deadline": "Friday"
-        }}
-    ]
-}}
-
+Return only action items.
 Do not add explanations.
-Do not use markdown.
-Do not wrap JSON inside ```json.
 """,
     input_variables=["transcript"],
 )

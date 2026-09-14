@@ -1,5 +1,3 @@
-import json
-import re
 import sys
 
 from langchain_core.output_parsers import StrOutputParser
@@ -14,39 +12,25 @@ logger = get_logger(__name__)
 
 class SummaryAgent:
 
-    QUERY = "Summarize this meeting including objective, key discussions and decisions."
+    QUERY = "Summarize this meeting."
 
     @classmethod
     def invoke(cls, retriever):
-
         try:
             llm = MeetingLLM.load_model()
 
-            results = retriever.invoke(cls.QUERY)
+            docs = retriever.invoke(cls.QUERY)
+            transcript = "\n\n".join(doc.page_content for doc in docs)
 
-            transcript = "\n\n".join(doc.page_content for doc in results)
-
-            chain = (
-                SUMMARY_PROMPT
-                | llm
-                | StrOutputParser()
-            )
+            chain = SUMMARY_PROMPT | llm | StrOutputParser()
 
             response = chain.invoke({"transcript": transcript})
 
-            logger.info(f"RAW SUMMARY RESPONSE:\n{response}")
-
-            match = re.search(r"\{.*\}", response, re.DOTALL)
-
-            if not match:
-                raise ValueError("No valid JSON returned by LLM.")
-
-            parsed = json.loads(match.group())
-
             logger.info("Summary Agent executed successfully.")
 
-            return parsed["summary"]
+            return response.strip()
 
         except Exception as error:
             logger.error(str(error))
             raise ProjectException(str(error), sys)
+

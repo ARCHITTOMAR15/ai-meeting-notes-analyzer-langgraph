@@ -1,29 +1,23 @@
-
 from langchain_core.prompts import PromptTemplate
 
 SUMMARY_PROMPT = PromptTemplate(
     template="""
 You are an expert AI meeting analyst.
 
-Read the transcript and generate a concise meeting summary.
+Summarize the meeting professionally.
 
 Include:
-- Meeting objective
-- Key discussion points
-- Decisions made
+- Meeting objective.
+- Important discussion points.
+- Final decisions.
 
 Meeting Transcript:
 {transcript}
 
-Return ONLY valid JSON in this exact format.
+Write one concise professional summary (150-250 words).
 
-{{
-    "summary": "A concise meeting summary covering the objective, discussion points and decisions."
-}}
-
-Do not add explanations.
 Do not use markdown.
-Do not wrap JSON inside ```json.
+Do not use JSON.
 """,
     input_variables=["transcript"],
 )

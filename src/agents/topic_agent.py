@@ -37,19 +37,35 @@ class TopicAgent:
 
             logger.info(f"RAW TOPIC RESPONSE:\n{response}")
 
-            match = re.search(r"\{.*\}", response, re.DOTALL)
+            # ---------------- Try JSON first ----------------
+            try:
+                match = re.search(r"\{.*\}", response, flags=re.DOTALL)
+                if match:
+                    parsed = json.loads(match.group())
+                    if "topics" in parsed:
+                        return parsed["topics"]
+            except Exception:
+                pass
 
-            if not match:
-                raise ValueError("No valid JSON returned by LLM.")
+            # ---------------- Fallback for plain text ----------------
+            topics = []
 
-            parsed = json.loads(match.group())
+            for line in response.splitlines():
+                line = line.strip()
 
-            logger.info("Topic Agent executed successfully.")
+                # Remove bullets/numbers
+                line = re.sub(r"^[-•*]\s*", "", line)
+                line = re.sub(r"^\d+[.)]\s*", "", line)
 
-            return parsed["topics"]
+                if len(line) > 3:
+                    topics.append(line)
+
+            if topics:
+                return topics[:8]
+
+            raise ValueError("Could not extract topics from LLM response.")
 
         except Exception as error:
             logger.error(str(error))
             raise ProjectException(str(error), sys)
-
 
