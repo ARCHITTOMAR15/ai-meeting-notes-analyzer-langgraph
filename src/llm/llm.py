@@ -15,56 +15,53 @@ logger = get_logger(__name__)
 MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
 
 
-# -------------------------------------------------------------------
-# Cached model loader (Streamlit caches this function once)
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------
+# Cache ONLY this standalone function
+# ------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
-def _load_cached_model():
-    try:
-        config = load_config()
-        llm_config = config["llm"]
+def _cached_model():
+    config = load_config()
+    llm_config = config["llm"]
 
-        logger.info(f"Loading Hugging Face model: {MODEL_NAME}")
+    tokenizer = AutoTokenizer.from_pretrained(
+        MODEL_NAME,
+        cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
+    )
 
-        tokenizer = AutoTokenizer.from_pretrained(
-            MODEL_NAME,
-            cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
-        )
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_NAME,
+        cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
+        torch_dtype=torch.float32,
+        device_map="cpu",
+        low_cpu_mem_usage=True,
+    )
 
-        model = AutoModelForCausalLM.from_pretrained(
-            MODEL_NAME,
-            cache_dir=os.getenv("HF_HOME", "/tmp/huggingface"),
-            torch_dtype=torch.float32,
-            device_map="cpu",
-            low_cpu_mem_usage=True,
-        )
+    text_pipeline = pipeline(
+        task="text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        max_new_tokens=llm_config["max_tokens"],
+        temperature=llm_config["temperature"],
+        do_sample=False,
+        repetition_penalty=1.1,
+        pad_token_id=tokenizer.eos_token_id,
+        truncation=True,
+    )
 
-        text_pipeline = pipeline(
-            task="text-generation",
-            model=model,
-            tokenizer=tokenizer,
-            max_new_tokens=llm_config["max_tokens"],
-            temperature=llm_config["temperature"],
-            do_sample=False,
-            repetition_penalty=1.1,
-            pad_token_id=tokenizer.eos_token_id,
-            truncation=True,
-        )
+    logger.info("Qwen model loaded successfully.")
 
-        logger.info("Hugging Face model loaded successfully.")
-
-        return HuggingFacePipeline(pipeline=text_pipeline)
-
-    except Exception as error:
-        logger.error(str(error))
-        raise ProjectException(str(error), sys)
+    return HuggingFacePipeline(pipeline=text_pipeline)
 
 
-# -------------------------------------------------------------------
-# Class used by all agents
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------
+# This class is used by all agents
+# ------------------------------------------------------------------
 class MeetingLLM:
 
     @staticmethod
     def load_model():
-        return _load_cached_model()
+        try:
+            return _cached_model()
+        except Exception as error:
+            logger.error(str(error))
+            raise ProjectException(str(error), sys)
