@@ -1,22 +1,17 @@
-
 from langchain_core.prompts import PromptTemplate
 
-TOPIC_PROMPT = PromptTemplate.from_template("""
-You are an AI Meeting Notes Assistant.
+TOPIC_PROMPT = PromptTemplate(
+    template="""
+You are an expert AI meeting analyst.
 
-Extract the MAIN DISCUSSION TOPICS from the meeting transcript.
+Analyze the meeting transcript below and extract the main discussion topics.
 
-Meeting Transcript:
+Transcript:
 {transcript}
 
-{format_instructions}
+Return your answer ONLY in the JSON format described below.
 
-IMPORTANT:
-- Return ONLY a valid JSON object.
-- Topics must be discussion subjects, NOT speaker names or job titles.
-- Ignore names such as Product Manager, Customer Support Lead, QA Tester, Mobile Developer, Backend Developer, etc.
-- Each topic should be a short phrase (3–8 words).
-- Return between 3 and 8 unique topics.
-- Do not repeat the transcript.
-- Do not include explanations.
-""")
+{format_instructions}
+""",
+    input_variables=["transcript", "format_instructions"],
+)

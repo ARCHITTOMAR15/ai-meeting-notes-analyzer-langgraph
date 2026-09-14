@@ -1,8 +1,6 @@
-
-
 import sys
 
-from langchain_core.runnables import RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
 
 from src.llm.llm import MeetingLLM
 from src.llm.output_parser import OutputParser
@@ -15,30 +13,45 @@ logger = get_logger(__name__)
 
 class ActionAgent:
 
-    QUERY=("Extract all action items, task owners, and deadlines from this meeting.")
+    QUERY = "Extract all action items, task owners, and deadlines from this meeting."
 
     @classmethod
-    def invoke(cls,retriever):
+    def invoke(cls, retriever):
+
         try:
+            # Load cached LLM
             llm = MeetingLLM.load_model()
+
+            # Output parser
             parser = OutputParser.action_parser()
 
-            def retrieve_context(_):
-                results = retriever.invoke(cls.QUERY)
+            # Retrieve relevant transcript chunks
+            results = retriever.invoke(cls.QUERY)
 
-                return "\n\n".join(doc.page_content for doc in results)
+            transcript = "\n\n".join(
+                doc.page_content for doc in results
+            )
 
+            # Prompt → LLM → Text
             chain = (
-                RunnableLambda(
-                    lambda _: {
-                        "transcript": retrieve_context(None),
-                        "format_instructions": parser.get_format_instructions(),})| ACTION_PROMPT| llm| parser)
+                ACTION_PROMPT
+                | llm
+                | StrOutputParser()
+            )
+
+            # Pass transcript + format instructions
+            response = chain.invoke({
+                "transcript": transcript,
+                "format_instructions": parser.get_format_instructions(),
+            })
 
             logger.info("Action Agent executed successfully.")
 
-            return chain.invoke({})
+            # Parse JSON response
+            parsed = parser.parse(response)
+
+            return parsed.action_items
 
         except Exception as error:
             logger.error(str(error))
             raise ProjectException(str(error), sys)
-

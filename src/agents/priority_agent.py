@@ -2,7 +2,7 @@
 
 import sys
 
-from langchain_core.runnables import RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
 
 from src.llm.llm import MeetingLLM
 from src.llm.output_parser import OutputParser
@@ -24,21 +24,38 @@ class PriorityAgent:
     def invoke(cls, retriever):
 
         try:
+            # Load cached LLM
             llm = MeetingLLM.load_model()
+
+            # Output parser
             parser = OutputParser.priority_parser()
 
-            def retrieve_context(_):
-                results = retriever.invoke(cls.QUERY)
+            # Retrieve relevant transcript chunks
+            results = retriever.invoke(cls.QUERY)
 
-                return "\n\n".join(doc.page_content for doc in results)
+            transcript = "\n\n".join(
+                doc.page_content for doc in results
+            )
 
-            chain = (RunnableLambda(lambda _: {
-                        "transcript": retrieve_context(None),
-                        "format_instructions": parser.get_format_instructions(),})| PRIORITY_PROMPT| llm| parser)
+            # Prompt → LLM → String
+            chain = (
+                PRIORITY_PROMPT
+                | llm
+                | StrOutputParser()
+            )
+
+            # Pass transcript + format instructions
+            response = chain.invoke({
+                "transcript": transcript,
+                "format_instructions": parser.get_format_instructions(),
+            })
 
             logger.info("Priority Agent executed successfully.")
 
-            return chain.invoke({})
+            # Parse JSON response
+            parsed = parser.parse(response)
+
+            return parsed.priorities
 
         except Exception as error:
             logger.error(str(error))

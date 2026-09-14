@@ -1,22 +1,18 @@
+SUMMARY_PROMPT = PromptTemplate(
+    template="""
+You are an expert AI meeting analyst.
 
-from langchain_core.prompts import PromptTemplate
+Summarize the meeting including:
+- Meeting objective
+- Key discussions
+- Decisions made
 
-SUMMARY_PROMPT = PromptTemplate.from_template("""
-You are an AI Meeting Notes Assistant.
-
-Generate a concise meeting summary from the meeting transcript.
-
-Meeting Transcript:
+Transcript:
 {transcript}
 
-{format_instructions}
+Return ONLY valid JSON.
 
-IMPORTANT:
-- Your response MUST start with `{{`.
-- Your response MUST end with `}}`.
-- Return ONLY a valid JSON object.
-- Do NOT add markdown headings.
-- Do NOT add an extra "Summary" section.
-- Do NOT repeat the transcript.
-- Keep the summary concise and factual.
-""")
+{format_instructions}
+""",
+    input_variables=["transcript", "format_instructions"],
+)
