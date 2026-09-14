@@ -88,11 +88,11 @@ Meeting Transcript
 
 ##  Application Preview
 
-> Save your Streamlit screenshot as **assets/app-preview.png** and it will appear automatically.
+## 📸 Application Preview
 
-```md
-![Application Preview](app-preview.png)
-```
+<p align="center">
+  <img src="app-preview.png" alt="AI Meeting Notes Analyzer Streamlit UI" width="100%">
+</p>
 
 
 
