@@ -23,7 +23,7 @@ class SummaryAgent:
 
             def retrieve_context(_):
                 results=retriever.retrieve(cls.QUERY)
-                return "\n\n".join(node.text for node in results)
+                return "\n\n".join(doc.page_content for doc in results)
 
             chain=(RunnableLambda(lambda _:{"transcript": retrieve_context(None),
                         "format_instructions": parser.get_format_instructions(),})

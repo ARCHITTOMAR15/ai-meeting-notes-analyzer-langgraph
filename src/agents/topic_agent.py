@@ -28,9 +28,7 @@ class TopicAgent:
             def retrieve_context(_):
                 results = retriever.retrieve(cls.QUERY)
 
-                return "\n\n".join(
-                    node.text for node in results
-                )
+                return "\n\n".join(doc.page_content for doc in results)
 
             chain = (
               RunnableLambda(

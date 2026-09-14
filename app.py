@@ -114,14 +114,13 @@ if analyze_button:
             # 3. Split transcript into chunks
             chunks = TranscriptChunker.split(cleaned_document)
 
-            # 4. Create FAISS vector index
-            index_manager = FAISSIndexManager(
-                embedding_model=embedding_model
-            )
-            index_manager.create_index(chunks)
+            # 4. Create FAISS vector store
+            vector_store = FAISSIndexManager.create_index(
+             documents=chunks,
+              embedding_model=embedding_model,)
 
-            # 5. Retriever
-            retriever = TranscriptRetriever(index_manager)
+          # 5. Create Retriever
+            retriever = TranscriptRetriever.create_retriever(vector_store)
 
             # 6. Initial LangGraph state
             state = MeetingState(
