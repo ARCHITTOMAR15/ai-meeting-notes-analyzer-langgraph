@@ -9,11 +9,9 @@ logger = get_logger(__name__)
 
 
 class TranscriptCleaner:
-
     @staticmethod
     def clean(document):
         try:
-            # Lazy import (important for Streamlit Cloud)
             from llama_index.core.schema import Document
 
             text = document.text.strip()
@@ -23,12 +21,12 @@ class TranscriptCleaner:
 
             cleaned_document = Document(
                 text=text,
-                metadata=document.metadata.copy() if document.metadata else {},
+                metadata=document.metadata if hasattr(document, "metadata") else {}
             )
 
             logger.info("Transcript cleaned successfully.")
             return cleaned_document
 
         except Exception as e:
-            logger.error(str(e))
+            logger.exception("Cleaning failed.")
             raise ProjectException(e, sys)

@@ -1,16 +1,5 @@
 
-"""
-Transcript Chunker Module
-
-Phase 2 — Preprocessing
-
-Creates LlamaIndex Nodes from meeting transcripts.
-"""
-
 import sys
-
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.schema import Document, TextNode
 
 from src.utils.exception import ProjectException
 from src.utils.logger import get_logger
@@ -20,26 +9,22 @@ logger = get_logger(__name__)
 
 class TranscriptChunker:
 
-
-    CHUNK_SIZE = 512
-    CHUNK_OVERLAP = 50
-
-    @classmethod
-    def create_nodes(cls, document: Document) -> list[TextNode]:
-
+    @staticmethod
+    def split(document, chunk_size=512, chunk_overlap=50):
         try:
-            splitter = SentenceSplitter(
-                chunk_size=cls.CHUNK_SIZE,
-                chunk_overlap=cls.CHUNK_OVERLAP,
-            )
+            text = document.text if hasattr(document, "text") else str(document)
 
-            nodes = splitter.get_nodes_from_documents([document])
+            chunks = []
 
-            logger.info(f"Created {len(nodes)} transcript chunks.")
+            start = 0
+            while start < len(text):
+                end = start + chunk_size
+                chunks.append(text[start:end])
+                start += chunk_size - chunk_overlap
 
-            return nodes
+            logger.info(f"Created {len(chunks)} transcript chunks.")
+            return chunks
 
-        except Exception as error:
-            logger.error(str(error))
-            raise ProjectException(str(error), sys)
-
+        except Exception as e:
+            logger.exception("Chunking failed.")
+            raise ProjectException(e, sys)
