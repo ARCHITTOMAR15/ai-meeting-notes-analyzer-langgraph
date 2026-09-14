@@ -1,4 +1,3 @@
-
 import os
 import sys
 import streamlit as st
@@ -11,7 +10,7 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
+MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
 
 
 @st.cache_resource(show_spinner=False)
